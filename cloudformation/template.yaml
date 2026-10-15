@@ -1,137 +1,319 @@
-AWSTemplateFormatVersion: '2010-09-09'
-
-Description: 'Root CloudFormation template that invokes a nested S3 bucket stack'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: |
+  Nested stack that creates an Application, Network, or Gateway Load Balancer with an optional listener. 
+  - When CiSuffix is set, it also creates a VPC, two subnets, an internet gateway, a web security group, and a target group for CI testing.
 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Nested Stack Configuration"
-        Parameters:
-          - NestedStacksS3BucketName
-      - Label:
-          default: "Common Bucket Configuration"
+          default: "Common Configuration"
         Parameters:
           - ProjectName
           - Environment
-      - Label:
-          default: "Bucket Configuration"
-        Parameters:
-          - BucketBaseName
-      - Label:
-          default: "Encryption Configuration"
-        Parameters:
-          - KmsKey
-          - EnableBucketKey
-      - Label:
-          default: "Advanced Configuration"
-        Parameters:
           - CiSuffix
+      - Label:
+          default: "Load Balancer Configuration"
+        Parameters:
+          - LoadBalancerBaseName
+          - LoadBalancerType
+          - Scheme
+          - IpAddressType
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - SubnetIds
+          - SecurityGroupIds
+      - Label:
+          default: "Listener Configuration"
+        Parameters:
+          - ListenerProtocol
+          - ListenerPort
+          - DefaultTargetGroupArn
+          - CertificateArn
+          - SslPolicy
     ParameterLabels:
-      NestedStacksS3BucketName:
-        default: "S3 Bucket Name"
       ProjectName:
         default: "Project Name"
-      BucketBaseName:
-        default: "Bucket Base Name"
       Environment:
         default: "Environment"
       CiSuffix:
         default: "CI Suffix"
-      KmsKey:
-        default: "KMS Key (ARN / Alias)"
-      EnableBucketKey:
-        default: "Enable S3 Bucket Key"
+      LoadBalancerBaseName:
+        default: "Load Balancer Base Name"
+      LoadBalancerType:
+        default: "Load Balancer Type"
+      Scheme:
+        default: "Scheme"
+      IpAddressType:
+        default: "IP Address Type"
+      SubnetIds:
+        default: "Subnet IDs"
+      SecurityGroupIds:
+        default: "Security Group IDs"
+      ListenerProtocol:
+        default: "Listener Protocol"
+      ListenerPort:
+        default: "Listener Port"
+      DefaultTargetGroupArn:
+        default: "Default Target Group ARN"
+      CertificateArn:
+        default: "Certificate ARN"
+      SslPolicy:
+        default: "SSL Policy"
 
 Parameters:
-  NestedStacksS3BucketName:
-    Type: String
-    Default: "subhamay-cfn-templates-bucket-270453428528-us-east-1"
-    Description: "S3 bucket name where the nested CloudFormation template is stored"
-    MinLength: 3
-    MaxLength: 63
-    AllowedPattern: "^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
-    ConstraintDescription: "S3 bucket name must be 3-63 characters, start and end with lowercase letter or number, and can contain hyphens and dots"
-
   ProjectName:
     Type: String
-    Default: "ztc-etl"
-    Description: "Project name to use as a bucket prefix"
-    MinLength: 1
-    MaxLength: 20
-    AllowedPattern: "^[a-z0-9-]+$"
-    ConstraintDescription: "Project name must be lowercase letters, numbers, and hyphens only"
-
-  BucketBaseName:
-    Type: String
-    Default: "csv-raw-data"
-    MinLength: 1
-    MaxLength: 20
-    AllowedPattern: "^[a-z0-9.-]+$"
-    ConstraintDescription: "Bucket base name must be 1-20 characters and can only contain lowercase letters, numbers, hyphens, and dots"
-    Description: Base name for the S3 bucket (account ID, environment, and region will be appended)
-
-  KmsKey:
-    Type: String
-    Default: ""
-    AllowedPattern: "^(alias/[a-zA-Z0-9_-]+|arn:aws:kms:[a-z0-9-]+:[0-9]+:key/[a-zA-Z0-9-]+|[a-zA-Z0-9_-]+)?$"
-    ConstraintDescription: "KMS Key can be a key name (e.g., my-key, auto-converted to alias/my-key), a KMS key alias (e.g., alias/my-key), or a full KMS key ARN (e.g., arn:aws:kms:region:account:key/key-id), or leave empty for no KMS encryption"
-    Description: "Optional KMS Key for S3 bucket encryption. Accepts: key name (my-key), alias (alias/my-key), or ARN (arn:aws:kms:region:account:key/key-id). Plain key names are auto-converted to aliases."
-
-  EnableBucketKey:
-    Type: String
-    Default: "false"
-    AllowedValues:
-      - "true"
-      - "false"
-    Description: "Enable S3 Bucket Key for KMS encryption cost optimization (only applicable when KmsKey is provided)"
-
+    Default: "cfn"
+    AllowedPattern: "^[a-z0-9-]{1,12}$"
   Environment:
     Type: String
     Default: devl
-    Description: "Deployment environment for the S3 bucket"
-
+    AllowedValues: [devl, test, prod]
+  LoadBalancerBaseName:
+    Type: String
+    Default: "test-alb"
+    AllowedPattern: "^[a-z0-9-]{1,10}$"
+    Description: Short name appended to project and environment (e.g. alb, nlb, gwlb)
   CiSuffix:
     Type: String
     Default: ""
-    Description: "Optional CI suffix to append to the bucket name"
+    AllowedPattern: "^[a-z0-9-]{0,4}$"
+    Description: Optional CI suffix appended to the load balancer name. Keep it short, since load balancer names are limited to 32 characters.
+  LoadBalancerType:
+    Type: String
+    Default: application
+    AllowedValues: [application, network, gateway]
+  Scheme:
+    Type: String
+    Default: internal
+    AllowedValues: [internal, internet-facing]
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: Subnets in at least two AZs (one per AZ is required for gateway). Ignored when CiSuffix is set, because a CI build creates its own VPC and subnets.
+  SecurityGroupIds:
+    Type: CommaDelimitedList
+    Default: ""
+    Description: Leave blank for gateway load balancers, which do not support security groups
+  IpAddressType:
+    Type: String
+    Default: ipv4
+    AllowedValues: [ipv4, dualstack]
+
+  # ---- Optional listener ----
+  ListenerProtocol:
+    Type: String
+    Default: "HTTP"
+    Description: HTTP, HTTPS (application); TCP, UDP, TCP_UDP, TLS (network); GENEVE (gateway). Blank skips the listener.
+  ListenerPort:
+    Type: Number
+    Default: 80
+    MinValue: 1
+    MaxValue: 65535
+    Description: Port the listener accepts traffic on. Only used when ListenerProtocol is set (e.g. 443 for HTTPS, 6081 for GENEVE).
+  DefaultTargetGroupArn:
+    Type: String
+    Default: ""
+    Description: Target group the listener forwards to. Required when ListenerProtocol is set.
+  CertificateArn:
+    Type: String
+    Default: ""
+    Description: Required for HTTPS and TLS listeners only
+  SslPolicy:
+    Type: String
+    Default: ELBSecurityPolicy-TLS13-1-2-2021-06
+
+Mappings:
+  TargetGroupSettings:
+    application:
+      Protocol: HTTP
+      Port: 80
+    network:
+      Protocol: TCP
+      Port: 80
+    gateway:
+      Protocol: GENEVE
+      Port: 6081
+
+Conditions:
+  UsesSecurityGroups: !And
+    - !Not [!Equals [!Ref LoadBalancerType, gateway]]
+    - !Not [!Equals [!Join ["", !Ref SecurityGroupIds], ""]]
+  HasCiSuffix: !Not [!Equals [!Ref CiSuffix, ""]]
+  UsesCiWebSecurityGroup: !And
+    - !Condition HasCiSuffix
+    - !Not [!Equals [!Ref LoadBalancerType, gateway]]
+  HasListener: !Not [!Equals [!Ref ListenerProtocol, ""]]
+  HasCertificate: !Not [!Equals [!Ref CertificateArn, ""]]
 
 Resources:
-  S3BucketNestedStack:
-    Type: AWS::CloudFormation::Stack
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
-    Metadata:
-      com.aws.cloudformation.Context:
-        why: "Invokes the nested S3 bucket CloudFormation template to create a versioned, encrypted S3 bucket with public access blocking and optional logging/website configuration"
-        must:
-          - "Nested template must be accessible at the specified S3 location"
-          - "IAM principal must have s3:GetObject permission on the template S3 bucket"
-          - "CloudFormation service must have permission to assume the required IAM role for S3 and KMS operations"
+  CiVpc:
+    Type: AWS::EC2::VPC
+    Condition: HasCiSuffix
     Properties:
-      TemplateURL: !Sub https://${NestedStacksS3BucketName}.s3.us-east-1.amazonaws.com/cfn-nested-aws-s3-bucket/template.yaml
-      Parameters:
-        ProjectName: !Ref ProjectName
-        BucketBaseName: !Ref BucketBaseName
-        KmsKey: !Ref KmsKey
-        EnableBucketKey: !Ref EnableBucketKey
-        Environment: !Ref Environment
-        CiSuffix: !Ref CiSuffix
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
       Tags:
-        - Key: ManagedBy
-          Value: RootStack
-        - Key: NestedStackPurpose
-          Value: S3BucketCreation
+        - Key: Name
+          Value: !Sub "${ProjectName}-${LoadBalancerBaseName}-${Environment}-${AWS::Region}-vpc-${CiSuffix}"
+
+  CiSubnetA:
+    Type: AWS::EC2::Subnet
+    Condition: HasCiSuffix
+    Properties:
+      VpcId: !Ref CiVpc
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-${LoadBalancerBaseName}-subnet-a-${Environment}-${AWS::Region}-${CiSuffix}"
+
+  CiSubnetB:
+    Type: AWS::EC2::Subnet
+    Condition: HasCiSuffix
+    Properties:
+      VpcId: !Ref CiVpc
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-${LoadBalancerBaseName}-subnet-b-${Environment}-${AWS::Region}-${CiSuffix}"
+
+  CiInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Condition: HasCiSuffix
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-${LoadBalancerBaseName}-igw-${Environment}-${AWS::Region}-${CiSuffix}"
+
+  CiInternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Condition: HasCiSuffix
+    Properties:
+      VpcId: !Ref CiVpc
+      InternetGatewayId: !Ref CiInternetGateway
+
+  CiRouteTable:
+    Type: AWS::EC2::RouteTable
+    Condition: HasCiSuffix
+    Properties:
+      VpcId: !Ref CiVpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-${LoadBalancerBaseName}-rtb-${Environment}-${AWS::Region}-${CiSuffix}"
+
+  CiDefaultRoute:
+    Type: AWS::EC2::Route
+    Condition: HasCiSuffix
+    DependsOn: CiInternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref CiRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref CiInternetGateway
+
+  CiSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: HasCiSuffix
+    Properties:
+      SubnetId: !Ref CiSubnetA
+      RouteTableId: !Ref CiRouteTable
+
+  CiSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: HasCiSuffix
+    Properties:
+      SubnetId: !Ref CiSubnetB
+      RouteTableId: !Ref CiRouteTable
+
+  CiWebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: HasCiSuffix
+    Properties:
+      GroupDescription: Allows HTTP and HTTPS traffic to the CI load balancer
+      VpcId: !Ref CiVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-${LoadBalancerBaseName}-web-sg-${Environment}-${AWS::Region}-${CiSuffix}"
+
+  CiTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Condition: HasCiSuffix
+    Properties:
+      VpcId: !Ref CiVpc
+      Protocol: !FindInMap [TargetGroupSettings, !Ref LoadBalancerType, Protocol]
+      Port: !FindInMap [TargetGroupSettings, !Ref LoadBalancerType, Port]
+      TargetType: instance
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-${LoadBalancerBaseName}-tg-${Environment}-${AWS::Region}-${CiSuffix}"
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !If
+        - HasCiSuffix
+        - !Sub "${ProjectName}-${LoadBalancerBaseName}-${Environment}-${AWS::Region}-${CiSuffix}"
+        - !Sub "${ProjectName}-${LoadBalancerBaseName}-${Environment}-${AWS::Region}"
+      Type: !Ref LoadBalancerType
+      Scheme: !Ref Scheme
+      Subnets: !If
+        - HasCiSuffix
+        - - !Ref CiSubnetA
+          - !Ref CiSubnetB
+        - !Ref SubnetIds
+      IpAddressType: !Ref IpAddressType
+      SecurityGroups: !If
+        - UsesCiWebSecurityGroup
+        - - !Ref CiWebSecurityGroup
+        - !If [UsesSecurityGroups, !Ref SecurityGroupIds, !Ref AWS::NoValue]
+      Tags:
+        - Key: Name
+          Value: !If [HasCiSuffix, !Sub "${ProjectName}-${LoadBalancerBaseName}-${Environment}-${AWS::Region}-${CiSuffix}", !Sub "${ProjectName}-${LoadBalancerBaseName}-${Environment}-${AWS::Region}"]
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: LoadBalancerType
+          Value: !Ref LoadBalancerType
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: HasListener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: !Ref ListenerPort
+      Protocol: !Ref ListenerProtocol
+      Certificates: !If
+        - HasCertificate
+        - - CertificateArn: !Ref CertificateArn
+        - !Ref AWS::NoValue
+      SslPolicy: !If [HasCertificate, !Ref SslPolicy, !Ref AWS::NoValue]
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !If [HasCiSuffix, !Ref CiTargetGroup, !Ref DefaultTargetGroupArn]
 
 Outputs:
-  NestedStackId:
-    Description: "ID of the nested stack"
-    Value: !Ref S3BucketNestedStack
-
-  S3BucketName:
-    Description: "Name of the S3 bucket created by the nested stack"
-    Value: !GetAtt S3BucketNestedStack.Outputs.S3BucketName
-
-  S3BucketArn:
-    Description: "ARN of the S3 bucket created by the nested stack"
-    Value: !GetAtt S3BucketNestedStack.Outputs.S3BucketArn
+  LoadBalancerArn:
+    Value: !Ref LoadBalancer
+  LoadBalancerFullName:
+    Value: !GetAtt LoadBalancer.LoadBalancerFullName
+  DnsName:
+    Value: !GetAtt LoadBalancer.DNSName
+  CanonicalHostedZoneId:
+    Description: Needed for Route 53 alias records
+    Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
+  ListenerArn:
+    Condition: HasListener
+    Value: !Ref Listener

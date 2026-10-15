@@ -1,249 +1,216 @@
-# CloudFormation S3 Template Repository
+# CloudFormation Nested Stack Template : Load Balancer
 
 <!-- Row 1: Status - Most Important -->
-[![Release](https://img.shields.io/github/v/release/subhamay-bhattacharyya/aws-bedrock-faq-chatbot?label=Release)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot/releases)&nbsp;[![Release Workflow](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot/actions/workflows/release.yaml/badge.svg)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot/actions/workflows/release.yaml)&nbsp;[![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot/issues)&nbsp;[![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot/commits)
+[![Release](https://img.shields.io/github/v/release/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer?label=Release)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer/releases)&nbsp;[![Release Workflow](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer/actions/workflows/release.yaml/badge.svg)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer/actions/workflows/release.yaml)&nbsp;[![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer/issues)&nbsp;[![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer/commits)
 
 <!-- Row 2: Code Quality -->
-[![Top Language](https://img.shields.io/badge/Languages-Python%20%7C%20YAML-blue)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)&nbsp;[![Commits](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot/commits)
+[![Top Language](https://img.shields.io/badge/Languages-YAML-blue)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer)&nbsp;[![Commits](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer/commits)
 
 <!-- Row 3: Tech Stack -->
 [![CloudFormation](https://img.shields.io/badge/CloudFormation-IaC-orange?logo=amazonaws&logoColor=white)](https://aws.amazon.com/cloudformation/)&nbsp;[![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D97757?logo=anthropic&logoColor=white)](https://claude.ai/)
 
 <!-- Row 4: Repository Info -->
-[![Files](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)&nbsp;[![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)&nbsp;[![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya/aws-bedrock-faq-chatbot)](https://github.com/subhamay-bhattacharyya/aws-bedrock-faq-chatbot/releases)
+[![Files](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer)&nbsp;[![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer)](https://github.com/subhamay-bhattacharyya/cfn-nested-aws-load-balancert)&nbsp;[![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-load-balancer/releases)
 
 <!-- Row 5: Custom Metrics -->
-[![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/52393fb36dc28479957fbb381dda208a/raw/aws-bedrock-faq-chatbot.json)](https://gist.github.com/subhamay-bhattacharyya/52393fb36dc28479957fbb381dda208a)
+[![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/b5b980ffe2f8de29b7aff6443fe8f4ae/raw/cfn-nested-aws-load-balancert.json)](https://gist.github.com/subhamay-bhattacharyya/b5b980ffe2f8de29b7aff6443fe8f4ae)
 
 ---
 
-This repository contains nested CloudFormation templates for deploying S3 buckets with security best practices and optional policy enforcement.
+A nested CloudFormation template that creates an Application, Network, or Gateway Elastic Load Balancer (ELBv2), with an optional listener. When the template is run as part of a CI build, it also creates its own VPC, internet gateway, subnets, web security group, and target group so the load balancer can be tested in isolation.
 
 ## Overview
 
-This is a **nested stack template** designed to be invoked from a parent/root CloudFormation stack. Templates are stored in this repository and should be uploaded to an S3 bucket for reference by parent stacks.
+`cloudformation/template.yaml` is a **nested stack template**. Parent stacks invoke it with `AWS::CloudFormation::Stack` and `TemplateURL`, passing the load balancer settings as parameters and reading the load balancer details back from its outputs.
 
-## Template Files
-
-### CloudFormation Templates
-
-- **`templates/s3-bucket.yaml`** — Nested template for S3 bucket creation (versioning, public access blocking)
-- **`templates/s3-bucket-policy.yaml`** — Optional nested template for S3 bucket policy (encryption enforcement, secure transport)
-
-### Parameter Files
-
-- **`parameters/parameters.json`** — Parameter values for development environment
+The template can also be deployed directly with `aws cloudformation deploy`, as shown in the usage section below.
 
 ## Template Features
 
-### S3 Bucket Template (s3-bucket.yaml)
+- ✅ Application (ALB), Network (NLB), and Gateway (GWLB) load balancers
+- ✅ Internal or internet-facing scheme, with IPv4 or dualstack addressing
+- ✅ Optional listener, created only when `ListenerProtocol` is set
+- ✅ Optional TLS certificate and SSL policy for HTTPS and TLS listeners
+- ✅ Security groups attached to application and network load balancers, skipped for gateway load balancers, which do not support them
+- ✅ Parameters grouped and labeled in the CloudFormation console
+- ✅ CI mode: when `CiSuffix` is set, creates a VPC, two subnets, an internet gateway with a public route table, a web security group, and a target group, then builds the load balancer in them
 
-- ✅ Versioning enabled by default
-- ✅ Public Access Blocking
-- ✅ Smart bucket naming (project prefix, account ID, environment, region)
-- ✅ Optional CI suffix support
+### CI Mode
 
-### S3 Bucket Policy Template (s3-bucket-policy.yaml)
+Setting `CiSuffix` to a non-empty value turns on CI mode. The template then:
 
-- ✅ Encryption enforcement on uploads
-- ✅ Secure transport enforcement (HTTPS only)
-- ✅ Optional/conditional policy rules
+| Resource | Purpose |
+| -------- | ------- |
+| `CiVpc` | `10.0.0.0/16` VPC with DNS support and hostnames |
+| `CiSubnetA`, `CiSubnetB` | `10.0.0.0/24` and `10.0.1.0/24`, in the first two availability zones |
+| `CiInternetGateway`, `CiInternetGatewayAttachment` | Internet access for the VPC |
+| `CiRouteTable`, `CiDefaultRoute`, `CiSubnet*RouteTableAssociation` | Public route table (`0.0.0.0/0` to the internet gateway) for both subnets |
+| `CiWebSecurityGroup` | Allows inbound TCP 80 and 443 from `0.0.0.0/0` |
+| `CiTargetGroup` | Target group matching the load balancer type (see below) |
+
+In CI mode:
+
+- The load balancer uses the CI subnets, so `SubnetIds` is ignored.
+- Application and network load balancers use `CiWebSecurityGroup`, so `SecurityGroupIds` is ignored. Gateway load balancers get no security group.
+- The listener's default action forwards to `CiTargetGroup`, so `DefaultTargetGroupArn` is ignored.
+
+The CI target group uses these protocols and ports:
+
+| `LoadBalancerType` | Target group protocol | Port |
+| ------------------ | --------------------- | ---- |
+| `application` | HTTP | 80 |
+| `network` | TCP | 80 |
+| `gateway` | GENEVE | 6081 |
 
 ## Parameters
 
-### S3 Bucket Parameters
+### Common Configuration
 
 | Parameter | Type | Default | Description |
-| ----------- | ------ | --------- | ------------- |
-| `ProjectName` | String | — | Project name to use as bucket prefix (required) |
-| `BucketBaseName` | String | `cfn-bucket` | Base name for S3 bucket |
-| `environment` | String | `devl` | Deployment environment (devl, stag, prod) |
-| `CiSuffix` | String | `""` | Optional CI suffix to append to bucket name |
+| --------- | ---- | ------- | ----------- |
+| `ProjectName` | String | `cfn` | Project name, 1–12 lowercase letters, numbers, or hyphens |
+| `Environment` | String | `devl` | One of `devl`, `test`, `prod` |
+| `CiSuffix` | String | `""` | Optional CI suffix, up to 4 characters. A non-empty value enables CI mode and is appended to the load balancer name |
 
-### S3 Bucket Policy Parameters
-
-**Generic (Standalone) Mode:**
-
-| Parameter | Type | Description |
-| ----------- | ------ | ------------- |
-| `BucketName` | String | Direct bucket name (use for any bucket) |
-
-**Integrated Mode (with bucket template):**
+### Load Balancer Configuration
 
 | Parameter | Type | Default | Description |
-| ----------- | ------ | --------- | ------------- |
-| `ProjectName` | String | — | Project name (must match bucket template) |
-| `BucketBaseName` | String | `cfn-bucket` | Base name (must match bucket template) |
-| `environment` | String | `devl` | Environment (must match bucket template) |
-| `CiSuffix` | String | `""` | CI suffix (must match bucket template) |
+| --------- | ---- | ------- | ----------- |
+| `LoadBalancerBaseName` | String | `test-alb` | Short name, 1–10 lowercase letters, numbers, or hyphens |
+| `LoadBalancerType` | String | `application` | One of `application`, `network`, `gateway` |
+| `Scheme` | String | `internal` | `internal` or `internet-facing` |
+| `IpAddressType` | String | `ipv4` | `ipv4` or `dualstack` |
 
-**Usage:** If `BucketName` is provided (non-empty), it takes precedence. Otherwise, the bucket name is constructed from ProjectName/BucketBaseName/environment/CiSuffix.
+### Network Configuration
+
+| Parameter | Type | Default | Description |
+| --------- | ---- | ------- | ----------- |
+| `SubnetIds` | CommaDelimitedList | — (required) | Subnets in at least two AZs. Ignored in CI mode. Required even in CI mode, so pass any value there |
+| `SecurityGroupIds` | CommaDelimitedList | `""` | Security groups for application and network load balancers. Leave blank for gateway load balancers. Ignored in CI mode |
+
+### Listener Configuration
+
+| Parameter | Type | Default | Description |
+| --------- | ---- | ------- | ----------- |
+| `ListenerProtocol` | String | `HTTP` | `HTTP`, `HTTPS` (application); `TCP`, `UDP`, `TCP_UDP`, `TLS` (network); `GENEVE` (gateway). Blank skips the listener |
+| `ListenerPort` | Number | `80` | Listener port, 1–65535. Used only when `ListenerProtocol` is set. Use 443 for HTTPS and 6081 for GENEVE |
+| `DefaultTargetGroupArn` | String | `""` | Target group the listener forwards to. Required when `ListenerProtocol` is set outside CI mode |
+| `CertificateArn` | String | `""` | ACM certificate for HTTPS and TLS listeners |
+| `SslPolicy` | String | `ELBSecurityPolicy-TLS13-1-2-2021-06` | SSL policy, used only when `CertificateArn` is set |
 
 ## Outputs
 
-### S3 Bucket Template Outputs
-
-- `S3BucketName` — S3 bucket name
-- `S3BucketArn` — S3 bucket ARN
-
-### S3 Bucket Policy Template Outputs
-
-- `BucketName` — Bucket name with policy applied
-- `PolicyStatus` — Policy application status (Applied)
+| Output | Description |
+| ------ | ----------- |
+| `LoadBalancerArn` | ARN of the load balancer |
+| `LoadBalancerFullName` | Full name of the load balancer, as used in CloudWatch metrics |
+| `DnsName` | DNS name of the load balancer |
+| `CanonicalHostedZoneId` | Hosted zone ID for Route 53 alias records |
+| `ListenerArn` | ARN of the listener. Present only when a listener is created |
 
 ## Usage
 
-### 1. Upload Templates to S3
-
-```bash
-aws s3 cp templates/s3-bucket.yaml s3://your-cfn-bucket/templates/s3-bucket.yaml
-aws s3 cp templates/s3-bucket-policy.yaml s3://your-cfn-bucket/templates/s3-bucket-policy.yaml
-```
-
-### 2. Reference from Parent Stack
-
-In your parent/root CloudFormation template:
+### 1. Reference from a Parent Stack
 
 ```yaml
-S3BucketNestedStack:
+LoadBalancerNestedStack:
   Type: AWS::CloudFormation::Stack
   Properties:
-    TemplateURL: https://s3.amazonaws.com/your-cfn-bucket/templates/s3-bucket.yaml
+    TemplateURL: https://your-cfn-templates-bucket.s3.us-east-1.amazonaws.com/cfn-nested-aws-load-balancer/template.yaml
     Parameters:
-      ProjectName: !Ref ProjectName
-      BucketBaseName: cfn-bucket
-      environment: !Ref Environment
+      ProjectName: myproject
+      Environment: devl
+      LoadBalancerBaseName: alb
+      LoadBalancerType: application
+      Scheme: internal
+      SubnetIds: !Join [",", [subnet-0123456789abcdef0, subnet-0123456789abcdef1]]
+      SecurityGroupIds: !Ref AlbSecurityGroupId
+      ListenerProtocol: HTTP
+      ListenerPort: 80
+      DefaultTargetGroupArn: !Ref AppTargetGroupArn
       CiSuffix: !Ref CiSuffix
     Tags:
       - Key: Environment
-        Value: !Ref Environment
-
-S3PolicyNestedStack:
-  Type: AWS::CloudFormation::Stack
-  DependsOn: S3BucketNestedStack
-  Properties:
-    TemplateURL: https://s3.amazonaws.com/your-cfn-bucket/templates/s3-bucket-policy.yaml
-    Parameters:
-      BucketName: !GetAtt S3BucketNestedStack.Outputs.S3BucketName
-      ProjectName: ""
-      BucketBaseName: cfn-bucket
-      environment: !Ref Environment
-      CiSuffix: !Ref CiSuffix
-    Tags:
-      - Key: Environment
-        Value: !Ref Environment
+        Value: devl
 
 Outputs:
-  BucketName:
-    Value: !GetAtt S3BucketNestedStack.Outputs.S3BucketName
-  BucketArn:
-    Value: !GetAtt S3BucketNestedStack.Outputs.S3BucketArn
+  LoadBalancerArn:
+    Value: !GetAtt LoadBalancerNestedStack.Outputs.LoadBalancerArn
+  DnsName:
+    Value: !GetAtt LoadBalancerNestedStack.Outputs.DnsName
 ```
 
-### 3. Deploy Using AWS CLI
+Upload `cloudformation/template.yaml` to S3 before referencing it.
 
-#### Option A: Deploy Bucket Only
+### 2. Deploy Directly with the AWS CLI
+
+Validate the template:
 
 ```bash
-# Development (without CI prefix)
-aws cloudformation create-stack \
-  --stack-name cfn-s3-bucket-dev \
-  --template-body file://templates/s3-bucket.yaml \
-  --parameters file://parameters/dev.json
-
-# Staging (without CI prefix)
-aws cloudformation create-stack \
-  --stack-name cfn-s3-bucket-stag \
-  --template-body file://templates/s3-bucket.yaml \
-  --parameters file://parameters/staging.json
-
-# Production (without CI prefix)
-aws cloudformation create-stack \
-  --stack-name cfn-s3-bucket-prod \
-  --template-body file://templates/s3-bucket.yaml \
-  --parameters file://parameters/prod.json
+aws cloudformation validate-template \
+  --template-body file://cloudformation/template.yaml
 ```
 
-#### Option B: Deploy Bucket + Policy (Recommended)
+Deploy an internal application load balancer with an HTTP listener in an existing VPC:
 
 ```bash
-# Deploy bucket first
-aws cloudformation create-stack \
-  --stack-name cfn-s3-bucket-dev \
-  --template-body file://templates/s3-bucket.yaml \
-  --parameters file://parameters/dev.json
-
-# Wait for bucket to be created
-aws cloudformation wait stack-create-complete --stack-name cfn-s3-bucket-dev
-
-# Get the bucket name from stack outputs
-BUCKET_NAME=$(aws cloudformation describe-stacks \
-  --stack-name cfn-s3-bucket-dev \
-  --query 'Stacks[0].Outputs[?OutputKey==`S3BucketName`].OutputValue' \
-  --output text)
-
-#### Using Integrated Mode (with bucket template parameters)
-
-```bash
-aws cloudformation create-stack \
-  --stack-name cfn-s3-policy-dev \
-  --template-body file://templates/s3-bucket-policy.yaml \
-  --parameters file://parameters/policy-dev.json
+aws cloudformation deploy \
+  --template-file cloudformation/template.yaml \
+  --stack-name cfn-nested-aws-load-balancer-devl \
+  --parameter-overrides \
+    ProjectName=myproject \
+    Environment=devl \
+    LoadBalancerBaseName=alb \
+    SubnetIds=subnet-0123456789abcdef0,subnet-0123456789abcdef1 \
+    DefaultTargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/app/0123456789abcdef \
+  --region us-east-1
 ```
 
-#### Using Generic Mode (standalone with direct bucket name)
+Deploy in CI mode, which creates its own network. `SubnetIds` must still be passed, but any placeholder works:
 
 ```bash
-aws cloudformation create-stack \
-  --stack-name cfn-s3-policy-dev \
-  --template-body file://templates/s3-bucket-policy.yaml \
-  --parameters \
-    ParameterKey=BucketName,ParameterValue=my-existing-bucket \
-    ParameterKey=ProjectName,ParameterValue=""
+aws cloudformation deploy \
+  --template-file cloudformation/template.yaml \
+  --stack-name cfn-nested-aws-load-balancer-ci \
+  --parameter-overrides \
+    ProjectName=myproject \
+    Environment=devl \
+    LoadBalancerBaseName=alb \
+    CiSuffix=$CI_PIPELINE_ID \
+    Scheme=internal \
+    SubnetIds=subnet-00000000 \
+  --region us-east-1
 ```
 
-#### Option C: Deploy with CI Suffix
+Use `Scheme=internal` in CI mode unless you need internet-facing traffic. The default route to the internet gateway is created with the other CI resources, but the load balancer does not wait for it, so an internet-facing load balancer can occasionally fail to create during the first deployment.
+
+## Load Balancer Naming
+
+Without a CI suffix:
 
 ```bash
-# Development with CI suffix (e.g., for GitLab CI)
-aws cloudformation create-stack \
-  --stack-name cfn-s3-bucket-dev-ci \
-  --template-body file://templates/s3-bucket.yaml \
-  --parameters \
-    ParameterKey=ProjectName,ParameterValue=myproject \
-    ParameterKey=BucketBaseName,ParameterValue=cfn-bucket \
-    ParameterKey=environment,ParameterValue=devl \
-    ParameterKey=CiSuffix,ParameterValue=$CI_PIPELINE_ID
+{ProjectName}-{Environment}-{LoadBalancerBaseName}
 ```
 
-## Bucket Naming Convention
+Example: `myproject-devl-alb`
 
-The templates generate bucket names using the following pattern:
-
-**Without CI Suffix:**
+With a CI suffix:
 
 ```bash
-{ProjectName}-{BucketBaseName}-{AccountId}-{Environment}-{Region}
+{ProjectName}-{Environment}-{LoadBalancerBaseName}-{CiSuffix}
 ```
 
-Example: `myproject-cfn-bucket-123456789012-devl-us-east-1`
+Example: `myproject-devl-alb-1234`
 
-**With CI Suffix:**
-
-```bash
-{ProjectName}-{BucketBaseName}-{AccountId}-{Environment}-{Region}-{CiSuffix}
-```
-
-Example: `myproject-cfn-bucket-123456789012-devl-us-east-1-pipeline-12345`
+Load balancer names are limited to 32 characters. Keep `ProjectName`, `LoadBalancerBaseName`, and `CiSuffix` short enough to stay within that limit.
 
 ## Best Practices Implemented
 
-- ✅ Versioning enabled by default
-- ✅ Public access blocked by default
-- ✅ Smart bucket naming with project prefix, account ID, environment, and region
-- ✅ Optional CI suffix support for unique deployments
-- ✅ Optional policy enforcement (encryption and secure transport)
-- ✅ Export values for cross-stack references
+- ✅ Parameters validated with allowed patterns and value ranges
+- ✅ Load balancer names derived from project, environment, and base name for consistency
+- ✅ Gateway load balancers created without security groups, as AWS requires
+- ✅ Optional listener and TLS settings, so the template covers HTTP-only and HTTPS deployments
+- ✅ Outputs returned to parent stacks through `!GetAtt`
 
 ## License
 
