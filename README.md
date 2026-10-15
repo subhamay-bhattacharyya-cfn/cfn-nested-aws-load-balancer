@@ -85,7 +85,7 @@ The CI target group uses these protocols and ports:
 
 | Parameter | Type | Default | Description |
 | --------- | ---- | ------- | ----------- |
-| `SubnetIds` | CommaDelimitedList | — (required) | Subnets in at least two AZs. Ignored in CI mode. Required even in CI mode, so pass any value there |
+| `SubnetIds` | CommaDelimitedList | `subnet-00000000` (placeholder) | Subnets in at least two AZs. Ignored in CI mode. Pass real subnets when `CiSuffix` is empty |
 | `SecurityGroupIds` | CommaDelimitedList | `""` | Security groups for application and network load balancers. Leave blank for gateway load balancers. Ignored in CI mode |
 
 ### Listener Configuration
@@ -166,7 +166,7 @@ aws cloudformation deploy \
   --region us-east-1
 ```
 
-Deploy in CI mode, which creates its own network. `SubnetIds` must still be passed, but any placeholder works:
+Deploy in CI mode, which creates its own network. `SubnetIds` can be omitted, because it defaults to a placeholder that CI mode ignores:
 
 ```bash
 aws cloudformation deploy \
@@ -178,7 +178,6 @@ aws cloudformation deploy \
     LoadBalancerBaseName=alb \
     CiSuffix=$CI_PIPELINE_ID \
     Scheme=internal \
-    SubnetIds=subnet-00000000 \
   --region us-east-1
 ```
 

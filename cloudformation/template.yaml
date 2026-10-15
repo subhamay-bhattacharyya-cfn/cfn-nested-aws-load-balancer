@@ -91,7 +91,8 @@ Parameters:
     AllowedValues: [internal, internet-facing]
   SubnetIds:
     Type: CommaDelimitedList
-    Description: Subnets in at least two AZs (one per AZ is required for gateway). Ignored when CiSuffix is set, because a CI build creates its own VPC and subnets.
+    Default: subnet-00000000
+    Description: Subnets in at least two AZs (one per AZ is required for gateway). Ignored when CiSuffix is set, because a CI build creates its own VPC and subnets. The default is a placeholder, so pass real subnets when CiSuffix is empty.
   SecurityGroupIds:
     Type: CommaDelimitedList
     Default: ""
