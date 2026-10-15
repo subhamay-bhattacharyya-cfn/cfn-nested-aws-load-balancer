@@ -1,7 +1,5 @@
 {
   "Environment": "devl",
-  "KmsKey": "SB-KMS",
-  "ProjectName": "cfn-nstd",
-  "BucketBaseName": "s3-nested-stack",
+  "ProjectName": "cfn",
   "CiSuffix": ""
 }
