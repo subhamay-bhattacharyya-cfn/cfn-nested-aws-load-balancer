@@ -1,5 +1,5 @@
 {
   "Environment": "devl",
-  "ProjectName": "cfn",
+  "ProjectName": "cfn-nested",
   "CiSuffix": ""
 }
